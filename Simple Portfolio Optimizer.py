@@ -169,7 +169,7 @@ def compute_sharpe_ratio_portfolio(DF, weight, period = "M", risk_free_rate = 0)
     weight = np.array(weight)
 
     # calcuate return by date (mean columnwise)
-    weighted_return = DF.multiply(weight).mean(axis = 1)
+    weighted_return = DF.multiply(weight).sum(axis = 1)
 
     mean_return = weighted_return.mean()
     std = weighted_return.std()
@@ -286,7 +286,7 @@ except:
 
 #### 2.3 Wrap the optimization routine in function and obtain efficient frontier
 
-def compute_frontier(DF, max_indi_allocation = 0.3, num_points = 50):
+def compute_frontier(DF, max_indi_allocation = 0.3, num_points = 50, risk_free_rate = 0):
 
     """Compute the weights, return, and risk for plot the efficent frontier 
     
@@ -355,7 +355,7 @@ def compute_frontier(DF, max_indi_allocation = 0.3, num_points = 50):
 
             expected_return_vector = np.append(expected_return_vector, expected_return.value)
 
-            sharpe_vector = np.append(sharpe_vector, compute_sharpe_ratio_portfolio(DF, x.value))
+            sharpe_vector = np.append(sharpe_vector, compute_sharpe_ratio_portfolio(DF, x.value, risk_free_rate = risk_free_rate))
         except:
             # if there is no solution, do nothing
             pass
@@ -382,6 +382,7 @@ def compute_frontier(DF, max_indi_allocation = 0.3, num_points = 50):
 from bokeh.plotting import figure, output_file, show
 from bokeh.io import output_notebook
 from bokeh.models import LinearAxis, Range1d
+from bokeh.io import export_png
 
 # display plot inline in notebook
 output_notebook()
@@ -405,7 +406,29 @@ p.extra_y_ranges = {"sharpe":Range1d(start = 0, end = 2.5)}
 p.add_layout(LinearAxis(y_range_name = "sharpe", axis_label='Sharpe Ratio'), "right")
 p.triangle(std,sharpe, size = 4, color = "orange", y_range_name = "sharpe", legend = "Sharpe Ratio")
 p.legend.location = "bottom_left"
+
 show(p)
+
+# export to png
+try:
+    export_png(p, filename="Fig 1.1.PNG")
+except:
+    pass
+
+
+#%% 
+
+#work around because Bokeh will not load when uploaded as a Jupyter Notebook on Github
+
+%matplotlib inline
+from IPython.display import Image
+
+try:
+    display(Image(filename = "Fig 1.1.PNG"))
+except:
+    pass
+
+
 
 #%% [markdown]
 ### 2.5 Best Portfolio so far
@@ -418,6 +441,84 @@ show(p)
 portfolio_DF = pd.DataFrame({"Ticker":symbol_list, "Percentage": 100.0*weight[np.argmax(sharpe)]})
 
 display(portfolio_DF[portfolio_DF["Percentage"] > 0.0001])
+
+
+#%% [markdown]
+
+## 3. Using the same procedure to select best portfolio from S&P 500 (a larger pool)
+
+
+#%% 
+
+# load the SPY holding csv file from SPDR
+A = pd.read_csv("SPY_ALL_Holdings.csv")
+
+symbol_list1 = list(A["Identifier"])
+
+# Load Yahoo Data
+DF3 =  load_symbol(symbol_list1, period = "5y")
+
+# select adjusted close and fill missing values (especially for the DOW Company)
+DF3 = fill_missing_values(select_adjclose_column(DF3))
+
+# calculate monthly return and assign it to DF1
+DF4 = compute_monthly_return(DF3)
+DF4.head(10)
+
+
+
+
+#%% [markdown]
+
+# Optmize portfolio assuming a risk free rate of 2% annually
+
+
+
+#%% 
+(weight1,ret1,std1,sharpe1) = compute_frontier(DF4, risk_free_rate = 0.02)
+
+
+p1 = figure(x_axis_label = "Standard Deviation", y_axis_label = "monthly return", plot_width=600, plot_height=400, title="Efficient Fronter")
+
+# add a line renderer
+p1.line(std1, ret1, line_width=2, legend = "Optimized Portfolio")
+
+# add individual simulation point
+p1.circle(std1,ret1,size = 4)
+
+# add individual point for each stock
+p1.diamond(compute_std(DF4).values, compute_mean_return(DF4).values, color = "red", size = 4, legend = "Individual Stocks")
+
+p1.y_range = Range1d(0,np.nanmax(ret1) + 0.005)
+
+
+# add the sharpe ratio for the portfolio as the second y axis
+p1.extra_y_ranges = {"sharpe":Range1d(start = 0, end = 2.5)}
+p1.add_layout(LinearAxis(y_range_name = "sharpe", axis_label='Sharpe Ratio'), "right")
+p1.triangle(std,sharpe, size = 4, color = "orange", y_range_name = "sharpe", legend = "Sharpe Ratio")
+p1.legend.location = "bottom_right"
+
+show(p1)
+
+# export to png
+try:
+    export_png(p1, filename="Fig 1.2.PNG")
+except:
+    pass
+
+
+
+try:
+    display(Image(filename = "Fig 1.2.PNG"))
+except:
+    pass
+
+
+
+#%%
+portfolio_DF1 = pd.DataFrame({"Ticker":symbol_list1, "Percentage": 100.0*weight1[np.argmax(sharpe1)]})
+
+display(portfolio_DF1[portfolio_DF1["Percentage"] > 0.0001])
 
 
 #%%
