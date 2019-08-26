@@ -493,9 +493,9 @@ p1.y_range = Range1d(0,np.nanmax(ret1) + 0.005)
 
 
 # add the sharpe ratio for the portfolio as the second y axis
-p1.extra_y_ranges = {"sharpe":Range1d(start = 0, end = 2.5)}
+p1.extra_y_ranges = {"sharpe":Range1d(start = 0, end = 4)}
 p1.add_layout(LinearAxis(y_range_name = "sharpe", axis_label='Sharpe Ratio'), "right")
-p1.triangle(std,sharpe, size = 4, color = "orange", y_range_name = "sharpe", legend = "Sharpe Ratio")
+p1.triangle(std1,sharpe1, size = 4, color = "orange", y_range_name = "sharpe", legend = "Sharpe Ratio")
 p1.legend.location = "bottom_right"
 
 show(p1)
