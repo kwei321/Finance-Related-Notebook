@@ -9,3 +9,6 @@ A Jupyter notebook demonstrating the most simple and basic stock portfolio optim
 
 **2. Comparision of various investment strategies.ipynb**
 A Jupyter notebook comparing the return of various investment strategies, including Growth, Value, Dividend Appreciation, High Yield, Real Estate, and S&P 500.
+
+**2. Comparision of Real Estate ETF.ipynb**
+A Jupyter notebook comparing the return of various investment strategies, including VNQ, SCHH, REET, FREL, REM, KBWY, PSR, USRT, and 10 year treasury rate. 
